@@ -2,9 +2,9 @@
 
 namespace CreativeCrafts\LaravelApiResponse;
 
+use CreativeCrafts\LaravelApiResponse\Commands\LaravelApiResponseCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use CreativeCrafts\LaravelApiResponse\Commands\LaravelApiResponseCommand;
 
 class LaravelApiResponseServiceProvider extends PackageServiceProvider
 {
