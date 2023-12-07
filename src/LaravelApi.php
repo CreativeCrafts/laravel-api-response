@@ -23,7 +23,7 @@ class LaravelApi
         $response = [
             'success' => $data['success'],
             'message' => $data['message'] ?? null,
-            'result' => $data['result'] ?? null,
+            'data' => $data['result'] ?? null,
         ];
 
         if (isset($data['errors'])) {
@@ -65,26 +65,26 @@ class LaravelApi
         ];
     }
 
-    public static function successResponse(string $message = '', array $result = []): JsonResponse
+    public static function successResponse(string $message = '', array $data = []): JsonResponse
     {
-        $data = [
+        $responseData = [
             'success' => true,
             'message' => $message,
-            'result' => $result,
+            'data' => $data,
         ];
 
-        return (new self)->response($data);
+        return (new self)->response($responseData);
     }
 
-    public static function createdResponse(array $result): JsonResponse
+    public static function createdResponse(array $data): JsonResponse
     {
-        $data = [
+        $responseData = [
             'success' => true,
             'message' => 'Created successfully.',
-            'result' => $result,
+            'data' => $data,
         ];
 
-        return (new self)->response($data, Response::HTTP_CREATED);
+        return (new self)->response($responseData, Response::HTTP_CREATED);
     }
 
     public static function errorResponse(string $message = 'Bad request.', int $statusCode = Response::HTTP_BAD_REQUEST, ?Exception $exception = null, int $errorCode = 1): JsonResponse
