@@ -1,17 +1,17 @@
 {
-    "name": "creativecraft/laravel-api-response",
+    "name": "creativecrafts/laravel-api-response",
     "description": "A simple package to have a consistent api response.",
     "keywords": [
         "CreativeCrafts",
         "laravel",
         "laravel-api-response"
     ],
-    "homepage": "https://github.com/creativecraft/laravel-api-response",
+    "homepage": "https://github.com/CreativeCrafts/laravel-api-response",
     "license": "MIT",
     "authors": [
         {
-            "name": "rockblings",
-            "email": "infor@rockblings.com",
+            "name": "Godspower Oduose",
+            "email": "oduose4eva@gmail.com",
             "role": "Developer"
         }
     ],
