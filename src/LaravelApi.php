@@ -14,6 +14,7 @@ class LaravelApi
     protected function response(array|JsonResource|ResourceCollection $data = [], int $statusCode = Response::HTTP_OK, array $headers = []): JsonResponse
     {
         $response = (new self)->prepareResponse($data, $statusCode, $headers);
+
         return response()->json($response['content'], $response['statusCode'], $response['headers']);
     }
 
