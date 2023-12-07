@@ -1,9 +1,9 @@
 # A simple package to have a consistent api response.
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/creativecraft/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/creativecraft/laravel-api-response/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/creativecraft/laravel-api-response/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/creativecraft/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/creativecrafts/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
+[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3Arun-tests+branch%3Amain)
+[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/creativecraft/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecrafts/laravel-api-response)
 
 A simple handy package to have a consistent api response.
 
@@ -12,7 +12,7 @@ A simple handy package to have a consistent api response.
 You can install the package via composer:
 
 ```bash
-composer require creativecraft/laravel-api-response
+composer require creativecrafts/laravel-api-response
 ```
 
 ## Usage
