@@ -2,9 +2,9 @@
 
 namespace CreativeCrafts\LaravelApiResponse\Tests;
 
+use CreativeCrafts\LaravelApiResponse\LaravelApiResponseServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use CreativeCrafts\LaravelApiResponse\LaravelApiResponseServiceProvider;
 
 class TestCase extends Orchestra
 {
