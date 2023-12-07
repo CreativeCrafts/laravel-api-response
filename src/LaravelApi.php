@@ -11,24 +11,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class LaravelApi
 {
-    /**
-     * @param array|JsonResource|ResourceCollection $data
-     * @param int $statusCode
-     * @param array $headers
-     * @return JsonResponse
-     */
     protected function response(array|JsonResource|ResourceCollection $data = [], int $statusCode = Response::HTTP_OK, array $headers = []): JsonResponse
     {
         $response = (new self)->prepareResponse($data, $statusCode, $headers);
+
         return response()->json($response['content'], $response['statusCode'], $response['headers']);
     }
 
-    /**
-     * @param array|JsonResource|ResourceCollection $data
-     * @param int $statusCode
-     * @param array $headers
-     * @return array
-     */
     protected function prepareResponse(array|JsonResource|ResourceCollection $data, int $statusCode, array $headers): array
     {
         $response = [
@@ -72,19 +61,15 @@ class LaravelApi
         return [
             'content' => $response,
             'statusCode' => $statusCode,
-            'headers' => $headers
+            'headers' => $headers,
         ];
     }
 
-    /**
-     * @param string $message
-     * @return JsonResponse
-     */
     public static function successResponse(string $message = '', array $result = []): JsonResponse
     {
         $data = [
             'success' => true,
-            'message' =>$message,
+            'message' => $message,
             'result' => $result,
         ];
 
@@ -98,16 +83,17 @@ class LaravelApi
             'message' => 'Created successfully.',
             'result' => $result,
         ];
+
         return (new self)->response($data, Response::HTTP_CREATED);
     }
 
-    public static function errorResponse(string $message = 'Bad request.', int $statusCode = Response::HTTP_BAD_REQUEST, Exception $exception = null, int $errorCode = 1): JsonResponse
+    public static function errorResponse(string $message = 'Bad request.', int $statusCode = Response::HTTP_BAD_REQUEST, ?Exception $exception = null, int $errorCode = 1): JsonResponse
     {
         $data = [
             'success' => false,
             'message' => $message,
             'exception' => $exception,
-            'error_code' => $errorCode
+            'error_code' => $errorCode,
         ];
 
         return (new self)->response($data, $statusCode);

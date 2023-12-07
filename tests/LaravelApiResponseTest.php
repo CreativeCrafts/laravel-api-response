@@ -2,7 +2,6 @@
 
 use CreativeCrafts\LaravelApiResponse\LaravelApi;
 
-
 it('can respond with success', function () {
     $message = 'Success message';
 
