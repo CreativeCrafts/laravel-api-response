@@ -12,6 +12,23 @@ it('can respond with success', function () {
         ->and($response->getData()->message)->toEqual($message);
 });
 
+it('can respond with success and data', function () {
+    $data = [
+        'id' => 1,
+        'name' => 'Test',
+    ];
+
+    $message = 'Success message';
+
+    $response = LaravelApi::successResponse($message, $data);
+    expect($response)->toBeObject()
+        ->and($response->getData())->toBeObject()
+        ->and($response->getData()->success)->toBeTrue()
+        ->and($response->getData()->message)->toEqual($message)
+        ->and($response->getData()->data->id)->toBe(1)
+        ->and($response->getData()->data->name)->toEqual('Test');
+});
+
 it('can respond with exception', function () {
     $exception = new Exception('Test exception');
     $message = 'Internal server error';
