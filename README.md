@@ -5,15 +5,7 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/creativecraft/laravel-api-response/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/creativecraft/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-api-response.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-api-response)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+A simple handy package to have a consistent api response.
 
 ## Installation
 
@@ -23,37 +15,36 @@ You can install the package via composer:
 composer require creativecraft/laravel-api-response
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="laravel-api-response-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="laravel-api-response-config"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-api-response-views"
-```
-
 ## Usage
 
 ```php
-$laravelApiResponse = new CreativeCrafts\LaravelApiResponse();
-echo $laravelApiResponse->echoPhrase('Hello, CreativeCrafts!');
+// respond with success
+$message = 'Success message';
+$return LaravelApi::successResponse($message);
+
+// respond with success and data
+$message = 'Success message';
+$data = ['name' => 'test'];
+$return LaravelApi::successResponse($message, $data);
+
+// respond with created
+$data = [
+    'id' => 1,
+    'name' => 'Test',
+]
+$response = LaravelApi::createdResponse($data);
+
+// respond with exception
+$exception = new Exception('Test exception');
+$message = 'Internal server error';
+$errorCodes = 5001;
+$statusCode = 500;
+return LaravelApi::errorResponse($message, $statusCode, $exception, $errorCodes);
+
+// respond with error
+$message = 'Missing required parameters';
+$statusCode = 406;
+return LaravelApi::errorResponse($message, $statusCode);
 ```
 
 ## Testing
@@ -76,7 +67,7 @@ Please review [our security policy](../../security/policy) on how to report secu
 
 ## Credits
 
-- [rockblings](https://github.com/rockblings)
+- [Godspower Oduose](https://github.com/rockblings)
 - [All Contributors](../../contributors)
 
 ## License
