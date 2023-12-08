@@ -34,7 +34,7 @@ $data = [
 ]
 $response = LaravelApi::createdResponse($data);
 
-// respond with exception
+// respond with exception. Exception is optional and will only be used in local or development environment
 $exception = new Exception('Test exception');
 $message = 'Internal server error';
 $errorCodes = 5001;
@@ -45,6 +45,45 @@ return LaravelApi::errorResponse($message, $statusCode, $exception, $errorCodes)
 $message = 'Missing required parameters';
 $statusCode = 406;
 return LaravelApi::errorResponse($message, $statusCode);
+
+// app/Exceptions/Handler.php can be modified to return the response
+public function render($request, Throwable $e): Response|JsonResponse|ResponseAlias
+    {
+        if ($request->expectsJson()) {
+            if ($e instanceof PostTooLargeException) {
+                return LaravelApi::errorResponse("Size of attached file should be less " . ini_get("upload_max_filesize") . "B", ResponseAlias::HTTP_REQUEST_ENTITY_TOO_LARGE, $e);
+            }
+
+            if ($e instanceof ValidationException) {
+                return LaravelApi::errorResponse($e->validator->errors()->first(), ResponseAlias::HTTP_UNPROCESSABLE_ENTITY, $e);
+            }
+
+            if ($e instanceof ModelNotFoundException) {
+                return LaravelApi::errorResponse('Entry for ' . str_replace('App\\', '', $e->getModel()) . ' not found', ResponseAlias::HTTP_NOT_FOUND, $e);
+            }
+
+            if ($e instanceof AuthenticationException) {
+                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_UNAUTHORIZED, $e);
+            }
+
+            if ($e instanceof AuthorizationException) {
+                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_FORBIDDEN, $e);
+            }
+
+            if ($e instanceof ThrottleRequestsException) {
+                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_TOO_MANY_REQUESTS, $e);
+            }
+
+            if ($e instanceof Exception) {
+                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_INTERNAL_SERVER_ERROR, $e);
+            }
+
+            if ($e instanceof Error) {
+                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+            }
+        }
+        return parent::render($request, $e);
+
 ```
 
 ## Testing
