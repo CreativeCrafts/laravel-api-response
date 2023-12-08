@@ -21,3 +21,7 @@ All notable changes to `laravel-api-response` will be documented in this file.
 ## 0.0.5 - 2023-12-07
 
 - fixed a typo in array response
+
+## 0.0.6 - 2023-12-08
+
+- added more usage information in readme file
