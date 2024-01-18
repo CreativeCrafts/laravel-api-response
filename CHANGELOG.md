@@ -25,3 +25,7 @@ All notable changes to `laravel-api-response` will be documented in this file.
 ## 0.0.6 - 2023-12-08
 
 - added more usage information in readme file
+
+## 0.0.7 - 2024-01-18
+
+- updated composer packages
