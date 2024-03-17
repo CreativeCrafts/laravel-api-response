@@ -29,3 +29,8 @@ All notable changes to `laravel-api-response` will be documented in this file.
 ## 0.0.7 - 2024-01-18
 
 - updated composer packages
+
+## 1.0.0  - 2024-03-17
+
+- Added support for Laravel 11
+- Set php8.2 as the minimum php version
