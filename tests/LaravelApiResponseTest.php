@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use CreativeCrafts\LaravelApiResponse\LaravelApi;
 
 it('can respond with success', function () {

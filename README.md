@@ -1,90 +1,184 @@
-# A simple package to have a consistent api response.
+# Laravel API Response
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/creativecrafts/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/creativecraft/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecrafts/laravel-api-response)
 
-A simple handy package to have a consistent api response.
+Laravel API Response is a powerful and flexible package that provides a standardized way to structure API responses in Laravel applications. It offers a range of features to enhance your API development experience, including consistent response formatting, conditional responses, pagination support, rate limiting, and more.
 
-## Installation
+Table of Contents
+=================
+    1. [Installation](#installation)
+    2. [Configuration](#configuration)
+    3. [Basic Usage](#basic-usage)
+    4. [Feature](#feature)
+        - [Success Response](#success-response)
+        - [Error Response](#error-response)
+        - [Conditional Response](#conditional-response)
+        - [Pagination](#pagination)
+        - [Rate Limiting](#rate-limiting)
+        - [Response Compression](#response-compression)
+        - [Localization](#localization)
+        - [HATEOAS Links](#hateoas-links)
+        - [Logging](#logging)
+    5. [Advanced Usage](#advanced-usage)
+    6. [Testing](#testing)
+    7. [Changelog](#changelog)
+    8. [Contributing](#contributing)
+    9. [Security Vulnerabilities](#security-vulnerabilities)
+    10. [Credits](#credits)
+    11. [License](#license)
 
+## 1. Installation
 You can install the package via composer:
 
 ```bash
 composer require creativecrafts/laravel-api-response
 ```
 
-## Usage
+## 2. Configuration
+The package comes with a default configuration file that you can publish to your application using the following command:
+
+```bash 
+php artisan vendor:publish --provider="CreativeCrafts\LaravelApiResponse\LaravelApiResponseServiceProvider"
+```
+This will create a laravel-api-response.php file in your config directory. You can customize various aspects of the package behavior in this file.
+
+## 3. Basic Usage
+To use the Laravel API Response in your controllers, you can inject the LaravelApi class:
 
 ```php
-// respond with success
-$message = 'Success message';
-$return LaravelApi::successResponse($message);
+use CreativeCrafts\LaravelApiResponse\LaravelApi;
 
-// respond with success and data
-$message = 'Success message';
-$data = ['name' => 'test'];
-$return LaravelApi::successResponse($message, $data);
+class UserController extends Controller
+{
+    protected $api;
 
-// respond with created
-$data = [
-    'id' => 1,
-    'name' => 'Test',
-]
-$response = LaravelApi::createdResponse($data);
-
-// respond with exception. Exception is optional and will only be used in local or development environment
-$exception = new Exception('Test exception');
-$message = 'Internal server error';
-$errorCodes = 5001;
-$statusCode = 500;
-return LaravelApi::errorResponse($message, $statusCode, $exception, $errorCodes);
-
-// respond with error
-$message = 'Missing required parameters';
-$statusCode = 406;
-return LaravelApi::errorResponse($message, $statusCode);
-
-// app/Exceptions/Handler.php can be modified to return the response
-public function render($request, Throwable $e): Response|JsonResponse|ResponseAlias
+    public function __construct(LaravelApi $api)
     {
-        if ($request->expectsJson()) {
-            if ($e instanceof PostTooLargeException) {
-                return LaravelApi::errorResponse("Size of attached file should be less " . ini_get("upload_max_filesize") . "B", ResponseAlias::HTTP_REQUEST_ENTITY_TOO_LARGE, $e);
-            }
+        $this->api = $api;
+    }
 
-            if ($e instanceof ValidationException) {
-                return LaravelApi::errorResponse($e->validator->errors()->first(), ResponseAlias::HTTP_UNPROCESSABLE_ENTITY, $e);
-            }
-
-            if ($e instanceof ModelNotFoundException) {
-                return LaravelApi::errorResponse('Entry for ' . str_replace('App\\', '', $e->getModel()) . ' not found', ResponseAlias::HTTP_NOT_FOUND, $e);
-            }
-
-            if ($e instanceof AuthenticationException) {
-                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_UNAUTHORIZED, $e);
-            }
-
-            if ($e instanceof AuthorizationException) {
-                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_FORBIDDEN, $e);
-            }
-
-            if ($e instanceof ThrottleRequestsException) {
-                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_TOO_MANY_REQUESTS, $e);
-            }
-
-            if ($e instanceof Exception) {
-                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_INTERNAL_SERVER_ERROR, $e);
-            }
-
-            if ($e instanceof Error) {
-                return LaravelApi::errorResponse($e->getMessage(), ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
-            }
-        }
-        return parent::render($request, $e);
-
+    public function index()
+    {
+        $users = User::all();
+        return $this->api->successResponse('Users retrieved successfully', $users);
+    }
+}
 ```
+
+## 4. Feature
+The Laravel API Response package provides a range of features to help you build robust and reliable APIs. Here are some of the key features:
+
+### Success Responses
+To return a success response:
+
+```php
+return $this->api->successResponse('Operation successful', $data);
+```
+
+### Error Responses
+To return an error response:
+
+```php
+return $this->api->errorResponse('An error occurred', $errorCode, $statusCode);
+```
+
+### Conditional Responses
+For responses that support caching and conditional requests:
+    
+```php
+return $this->api->conditionalResponse($data, 'Data retrieved successfully');
+```
+This method automatically handles ETag and Last-Modified headers for efficient caching.
+
+### Pagination
+The package supports Laravel's pagination:
+
+```php
+$users = User::paginate(15);
+return $this->api->paginatedResponse('Users retrieved successfully', $users);
+```
+
+### Rate Limiting
+Rate limiting is automatically applied to API routes. You can configure the rate limit in the laravel-api-response.php config file:
+    
+```php
+'rate_limit_max_attempts' => env('API_RATE_LIMIT_MAX_ATTEMPTS', 60),
+'rate_limit_decay_minutes' => env('API_RATE_LIMIT_DECAY_MINUTES', 1),
+```
+
+### Response Compression
+Response compression can be enabled or disabled in the config:
+    
+```php 
+'enable_compression' => env('API_RESPONSE_COMPRESSION', true),
+```
+
+### Localization
+The package supports message localization. Use the localize method to translate messages:
+
+```php
+$message = $this->api->localize('messages.welcome');
+```
+
+### HATEOAS Links
+You can include HATEOAS links in your responses:
+
+```php
+$links = [
+    'self' => ['href' => '/api/users/1'],
+    'posts' => ['href' => '/api/users/1/posts'],
+];
+
+return $this->api->successResponse('User retrieved', $userData, 200, [], $links);
+```
+
+### Logging
+API responses are logged to a dedicated channel. You can configure the channel in the config file:
+    
+```php  
+'log_channel' => 'api',
+```
+
+## 5. Advanced Usage
+The Laravel API Response package provides a range of advanced features to help you build robust and reliable APIs. Here are some of the key features:
+
+### Custom Response Structure
+You can customize the response structure in the config file:
+
+```php
+'response_structure' => [
+    'success_key' => 'success',
+    'message_key' => 'message',
+    'data_key' => 'data',
+    'errors_key' => 'errors',
+    'error_code_key' => 'error_code',
+    'meta_key' => 'meta',
+    'links_key' => '_links',
+    'include_api_version' => true,
+],
+```
+
+### Filtering Response Fields
+You can filter the fields returned in the response:
+
+```php
+$fields = ['id', 'name', 'email'];
+return $this->api->successResponse('User data', $userData, 200, [], [], $fields);
+```
+
+### Custom Status Codes
+You can specify custom HTTP status codes for your responses:
+
+```php
+return $this->api->successResponse('Resource created', $newResource, 201);
+```
+
+### Version 2: Breaking Changes
+Version 2 of the package introduces one breaking change.
+ - createdResponse method has been removed. Use successResponse instead.
 
 ## Testing
 
