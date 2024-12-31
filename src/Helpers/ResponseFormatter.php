@@ -35,25 +35,47 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         $responseData = $this->transformData($data, $resourceClass);
 
         $response = [
-            'success' => $responseData['success'] ?? true,
-            'message' => $responseData['message'] ?? null,
-            'data' => $responseData['data'] ?? null,
+            Config::string('api-response.response_structure.success_key', 'success') => $responseData[Config::string(
+                'api-response.response_structure.success_key',
+                'success'
+            )] ?? true,
+            Config::string('api-response.response_structure.message_key', 'message') => $responseData[Config::string(
+                'api-response.response_structure.message_key',
+                'message'
+            )] ?? null,
+            Config::string('api-response.response_structure.data_key', 'data') => $responseData[Config::string(
+                'api-response.response_structure.data_key',
+                'data'
+            )] ?? null,
         ];
 
-        if (isset($responseData['errors'])) {
-            $response['errors'] = $responseData['errors'];
+        if (isset($responseData[Config::string('api-response.response_structure.errors_key', 'errors_key')])) {
+            $response[Config::string(
+                'api-response.response_structure.errors_key',
+                'errors_key'
+            )] = $responseData[Config::string('api-response.response_structure.errors_key', 'errors_key')];
         }
 
         if (isset($responseData['status'])) {
             $response['status'] = $responseData['status'];
         }
 
+        if (isset($responseData[Config::string('api-response.response_structure.links_key', '_links')])) {
+            $response[Config::string(
+                'api-response.response_structure.links_key',
+                '_links'
+            )] = $responseData[Config::string('api-response.response_structure.links_key', '_links')];
+        }
+
         if (isset($responseData['exception']) && $responseData['exception'] instanceof Throwable && $statusCode === Response::HTTP_OK) {
             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
         }
 
-        if ($response['success'] === false) {
-            $response['error_code'] = $responseData['error_code'] ?? 1;
+        if ($response[Config::string('api-response.response_structure.success_key', 'success')] === false) {
+            $response[Config::string(
+                'api-response.response_structure.error_code_key',
+                'error_code'
+            )] = $responseData[Config::string('api-response.response_structure.error_code_key', 'error_code')] ?? 1;
         }
 
         return [
@@ -160,10 +182,18 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         if (Config::boolean('laravel-api-response.enable_compression', true)) {
             $content = $response->getContent();
             if ($content !== false) {
-                $compressedContent = gzencode($content);
-                if ($compressedContent !== false) {
-                    $response->setContent($compressedContent);
-                    $response->headers->set('Content-Encoding', 'gzip');
+                $contentLength = strlen($content);
+                $compressionThreshold = Config::get('laravel-api-response.compression_threshold', 1024);
+
+                if ($contentLength > $compressionThreshold) {
+                    $compressedContent = gzencode($content, 9);
+                    if ($compressedContent !== false) {
+                        $compressedLength = strlen($compressedContent);
+                        if ($compressedLength < $contentLength) {
+                            $response->setContent($compressedContent);
+                            $response->headers->set('Content-Encoding', 'gzip');
+                        }
+                    }
                 }
             }
         }

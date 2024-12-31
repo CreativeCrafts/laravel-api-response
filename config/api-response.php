@@ -5,6 +5,16 @@ declare(strict_types=1);
 return [
     /*
     |--------------------------------------------------------------------------
+    | API Environment
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the environment that the API is running in.
+    |
+    */
+    'app.env' => env('APP_ENV', 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
     | API Version
     |--------------------------------------------------------------------------
     |
@@ -76,6 +86,16 @@ return [
     |
     */
     'enable_compression' => env('API_RESPONSE_COMPRESSION', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Response Compression Threshold
+    |--------------------------------------------------------------------------
+    |
+    | This option controls the minimum response size required for compression to be applied.
+    |
+    */
+    'compression_threshold' => env('API_RESPONSE_COMPRESSION_THRESHOLD', 1024),
 
     /*
     |--------------------------------------------------------------------------

@@ -39,18 +39,6 @@ final readonly class ResponseStructureValidator implements ResponseStructureVali
                 'Missing required keys in response structure configuration: ' . implode(', ', $missingKeys)
             );
         }
-
-        $defaultStructure = [
-            'success_key' => 'success',
-            'message_key' => 'message',
-            'data_key' => 'data',
-            'errors_key' => 'errors',
-            'error_code_key' => 'error_code',
-            'meta_key' => 'meta',
-            'links_key' => '_links',
-            'include_api_version' => true,
-        ];
-
-        return array_merge($defaultStructure, $structure);
+        return $structure;
     }
 }

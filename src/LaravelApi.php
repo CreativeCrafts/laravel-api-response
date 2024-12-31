@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace CreativeCrafts\LaravelApiResponse;
 
 use CreativeCrafts\LaravelApiResponse\Contracts\ApiResponseContract;
-use CreativeCrafts\LaravelApiResponse\Helpers\HateoasLinkGenerator;
-use CreativeCrafts\LaravelApiResponse\Helpers\LocalizationHelper;
-use CreativeCrafts\LaravelApiResponse\Helpers\ResponseFormatter;
-use CreativeCrafts\LaravelApiResponse\Helpers\ResponseStructureValidator;
+use CreativeCrafts\LaravelApiResponse\Contracts\HateoasLinkGeneratorContract;
+use CreativeCrafts\LaravelApiResponse\Contracts\LocalizationHelperContract;
+use CreativeCrafts\LaravelApiResponse\Contracts\ResponseFormatterContract;
+use CreativeCrafts\LaravelApiResponse\Contracts\ResponseStructureValidatorContract;
 use Exception;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Routing\Middleware\SubstituteBindings;
@@ -34,10 +34,10 @@ final class LaravelApi implements ApiResponseContract
     private array $errorCodeMappings = [];
 
     public function __construct(
-        private readonly ResponseFormatter $format,
-        private readonly LocalizationHelper $localizationHelper,
-        private readonly HateoasLinkGenerator $linkGenerator,
-        private readonly ResponseStructureValidator $responseStructureValidator
+        private readonly ResponseFormatterContract $format,
+        private readonly LocalizationHelperContract $localizationHelper,
+        private readonly HateoasLinkGeneratorContract $linkGenerator,
+        private readonly ResponseStructureValidatorContract $responseStructureValidator
     ) {
         $this->apiVersion = Config::string('api-response.api_version', '1.0');
         $this->responseStructure = $this->responseStructureValidator->validate(
@@ -55,11 +55,8 @@ final class LaravelApi implements ApiResponseContract
      */
     public function updateResponseStructure(array $newStructure): void
     {
-        $validatedStructure = $this->responseStructureValidator->validate(
-            array_merge($this->responseStructure, $newStructure)
-        );
-
-        $this->responseStructure = $validatedStructure;
+        $validatedStructure = $this->responseStructureValidator->validate($newStructure);
+        $this->responseStructure = array_merge($this->responseStructure, $validatedStructure);
     }
 
     /**
@@ -83,23 +80,29 @@ final class LaravelApi implements ApiResponseContract
         $localizationHelper = $this->localizationHelper;
 
         return new StreamedResponse(
-            function () use ($dataGenerator, $message, $responseStructure, $apiVersion, $localizationHelper): void {
-                echo json_encode([
-                        $responseStructure['success_key'] => true,
-                        $responseStructure['message_key'] => $localizationHelper->localize($message),
-                        'api_version' => $apiVersion,
-                    ], JSON_THROW_ON_ERROR) . "\n";
-
+            function () use (
+                $dataGenerator,
+                $message,
+                $responseStructure,
+                $apiVersion,
+                $localizationHelper
+            ): void {
                 $data = $dataGenerator();
-                if (!is_iterable($data)) {
+                if (! is_iterable($data)) {
                     throw new RuntimeException('Data generator must return an iterable.');
                 }
+
+                echo json_encode([
+                    $responseStructure['success_key'] => true,
+                    $responseStructure['message_key'] => $localizationHelper->localize($message),
+                    'api_version' => $apiVersion,
+                ], JSON_THROW_ON_ERROR) . "\n";
 
                 foreach ($data as $key => $value) {
                     if (is_string($key) && is_string($value)) {
                         echo json_encode([
-                                $key => $value,
-                            ], JSON_THROW_ON_ERROR) . "\n";
+                            $key => $value,
+                        ], JSON_THROW_ON_ERROR) . "\n";
                     } elseif (is_array($value) || is_object($value)) {
                         echo json_encode($value, JSON_THROW_ON_ERROR) . "\n";
                     }
@@ -286,7 +289,7 @@ final class LaravelApi implements ApiResponseContract
             'X-RateLimit-Reset' => RateLimiter::availableIn($rateLimitKey),
         ]);
 
-        $rateLimited = !RateLimiter::attempt(
+        $rateLimited = ! RateLimiter::attempt(
             $rateLimitKey,
             $maxAttempts,
             static function (): true {
@@ -350,14 +353,16 @@ final class LaravelApi implements ApiResponseContract
         $routes = Route::getRoutes();
         $endpoints = [];
 
-        foreach ($routes->getIterator() as $route) {
-            /** @var \Illuminate\Routing\Route $route */
-            if (str_starts_with($route->uri(), 'api')) {
-                $endpoints[] = [
-                    'uri' => $route->uri(),
-                    'methods' => $route->methods(),
-                    'name' => $route->getName(),
-                ];
+        foreach ($routes->getRoutes() as $route) {
+            if ($route instanceof \Illuminate\Routing\Route) {
+                $uri = $route->uri();
+                if (str_starts_with($uri, 'api')) {
+                    $endpoints[] = [
+                        'uri' => $uri,
+                        'methods' => $route->methods(),
+                        'name' => $route->getName(),
+                    ];
+                }
             }
         }
 
@@ -420,7 +425,7 @@ final class LaravelApi implements ApiResponseContract
         $formattedOperations = [];
 
         foreach ($operations as $index => $operation) {
-            if (!is_array($operation)) {
+            if (! is_array($operation)) {
                 continue;
             }
 
@@ -441,7 +446,7 @@ final class LaravelApi implements ApiResponseContract
 
             $formattedOperations[$index] = $formattedOperation;
 
-            if (!($operation['success'] ?? false)) {
+            if (! ($operation['success'] ?? false)) {
                 $overallSuccess = false;
             }
         }
