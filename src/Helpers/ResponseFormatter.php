@@ -197,7 +197,6 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
                 }
             }
         }
-
         return $response;
     }
 
@@ -339,12 +338,12 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             $xml = new SimpleXMLElement($rootElement ?? '<root/>');
         }
 
-        /** @var array|string $value */
         foreach ($array as $key => $value) {
             if (is_array($value)) {
                 $this->arrayToXml($value, $key, $xml->addChild($key));
             } else {
-                $xml->addChild($key, htmlspecialchars($value));
+                $xmlValue = $this->convertToXmlSafeValue($value);
+                $xml->addChild($key, $xmlValue);
             }
         }
 
@@ -352,8 +351,34 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         if ($result === false) {
             throw new RuntimeException('Failed to convert array to XML');
         }
-
         return $result;
+    }
+
+    /**
+     * Converts a value to an XML-safe string representation.
+     *
+     * @param mixed $value The value to convert.
+     * @return string The XML-safe string representation of the value.
+     * @throws JsonException
+     */
+    private function convertToXmlSafeValue(mixed $value): string
+    {
+        if (is_bool($value)) {
+            return $value ? 'true' : 'false';
+        }
+
+        if (is_null($value)) {
+            return '';
+        }
+
+        if (is_object($value) && method_exists($value, '__toString')) {
+            $value = $value->__toString();
+        } elseif (! is_scalar($value)) {
+            $value = json_encode($value, JSON_THROW_ON_ERROR);
+        }
+
+        /** @var string $value */
+        return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
 
     /**

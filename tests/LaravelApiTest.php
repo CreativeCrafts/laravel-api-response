@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use CreativeCrafts\LaravelApiResponse\Contracts\HateoasLinkGeneratorContract;
 use CreativeCrafts\LaravelApiResponse\Contracts\LocalizationHelperContract;
 use CreativeCrafts\LaravelApiResponse\Contracts\ResponseFormatterContract;
@@ -8,6 +10,7 @@ use CreativeCrafts\LaravelApiResponse\Helpers\LocalizationHelper;
 use CreativeCrafts\LaravelApiResponse\Helpers\ResponseFormatter;
 use CreativeCrafts\LaravelApiResponse\Helpers\ResponseStructureValidator;
 use CreativeCrafts\LaravelApiResponse\LaravelApi;
+use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Cache;
@@ -111,6 +114,9 @@ describe('streamResponse', function () {
 
 describe('successResponse', function () {
     it('returns a success response with correct structure', function () {
+        $request = Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->app->instance('request', $request);
+
         $response = $this->api->successResponse('Test message', ['data' => 'value']);
 
         expect($response)->toBeInstanceOf(Response::class)
@@ -128,6 +134,8 @@ describe('successResponse', function () {
     });
 
     it('includes HATEOAS links when provided', function () {
+        $request = Request::create('/', 'GET', [], [], [], ['HTTP_ACCEPT' => 'application/json']);
+        $this->app->instance('request', $request);
         $mockLinkGenerator = Mockery::mock(HateoasLinkGeneratorContract::class);
         $mockLinkGenerator->shouldReceive('generateLinks')
             ->once()
