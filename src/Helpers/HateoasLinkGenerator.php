@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CreativeCrafts\LaravelApiResponse\Helpers;
 
 use CreativeCrafts\LaravelApiResponse\Contracts\HateoasLinkGeneratorContract;
+use Exception;
 use Illuminate\Support\Facades\Route;
 
 final readonly class HateoasLinkGenerator implements HateoasLinkGeneratorContract
@@ -67,12 +68,16 @@ final readonly class HateoasLinkGenerator implements HateoasLinkGeneratorContrac
      */
     private function getRouteMethod(string $route): string
     {
-        $routeInfo = Route::getRoutes()->getByName($route);
-        if ($routeInfo === null) {
+        try {
+            $routeInfo = Route::getRoutes()->getByName($route);
+            if ($routeInfo === null) {
+                return 'GET';
+            }
+
+            $methods = $routeInfo->methods();
+            return empty($methods) ? 'GET' : fluent($methods)->string('0')->toString();
+        } catch (Exception $e) {
             return 'GET';
         }
-
-        $methods = $routeInfo->methods();
-        return empty($methods) ? 'GET' : fluent($methods)->string('0')->toString();
     }
 }

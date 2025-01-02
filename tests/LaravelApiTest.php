@@ -81,7 +81,7 @@ describe('updateResponseStructure', function () {
             'custom_key' => 'custom_value'
         ];
 
-        expect(fn() => $this->api->updateResponseStructure($incompleteStructure))
+        expect(fn () => $this->api->updateResponseStructure($incompleteStructure))
             ->toThrow(
                 InvalidArgumentException::class,
                 'Missing required keys in response structure configuration: errors_key'

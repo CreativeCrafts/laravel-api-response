@@ -49,6 +49,18 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             )] ?? null,
         ];
 
+        if ($data instanceof LengthAwarePaginator) {
+            $response[Config::string('api-response.response_structure.meta_key', 'meta')] = [
+                'current_page' => $data->currentPage(),
+                'from' => $data->firstItem(),
+                'last_page' => $data->lastPage(),
+                'path' => $data->path(),
+                'per_page' => $data->perPage(),
+                'to' => $data->lastItem(),
+                'total' => $data->total(),
+            ];
+        }
+
         if (isset($responseData[Config::string('api-response.response_structure.errors_key', 'errors_key')])) {
             $response[Config::string(
                 'api-response.response_structure.errors_key',
@@ -71,11 +83,15 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
         }
 
-        if ($response[Config::string('api-response.response_structure.success_key', 'success')] === false) {
+        if ((bool) $response[Config::string('api-response.response_structure.success_key', 'success')] === false) {
             $response[Config::string(
                 'api-response.response_structure.error_code_key',
                 'error_code'
             )] = $responseData[Config::string('api-response.response_structure.error_code_key', 'error_code')] ?? 1;
+        }
+
+        if (is_array($data) && isset($data['api_version'])) {
+            $response['api_version'] = $data['api_version'];
         }
 
         return [
@@ -276,49 +292,33 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      *
      * @param mixed $data The data to be transformed.
      * @param string|null $resourceClass The fully qualified class name of the API Resource to use.
-     * @return array|JsonResource The transformed data.
+     * @return array The transformed data.
      */
-    protected function transformData(mixed $data, ?string $resourceClass): array|JsonResource
+    protected function transformData(mixed $data, ?string $resourceClass): array
     {
+        $result = [];
+
+        $dataKey = Config::string('api-response.response_structure.data_key', 'data');
+
         if ($resourceClass && class_exists($resourceClass)) {
-            if ($data instanceof LengthAwarePaginator || (is_array($data) || $data instanceof Collection)) {
-                /** @var JsonResource|Collection $collection */
-                $collection = $resourceClass::collection($data);
-
-                if ($collection instanceof JsonResource) {
-                    return $collection;
-                }
-
-                if ($collection instanceof Collection) {
-                    return $collection->toArray();
-                }
-
-                // If it's not a JsonResource or Collection, which is unlikely but possible
-                return is_array($collection) ? $collection : [
-                    'data' => $collection,
-                ];
+            if ($data instanceof LengthAwarePaginator || $data instanceof Collection) {
+                /** @var JsonResource $transformedData */
+                $transformedData = $resourceClass::collection($data);
+                $result[$dataKey] = $transformedData->toArray(request());
+            } else {
+                /** @var JsonResource $resource */
+                $resource = new $resourceClass($data);
+                $result[$dataKey] = $resource->toArray(request());
             }
-
-            /** @var JsonResource $resource */
-            $resource = new $resourceClass($data);
-
-            if ($resource instanceof JsonResource) {
-                return $resource;
-            }
-
-            // If it's not a JsonResource, which is unlikely but possible
-            return is_array($resource) ? $resource : [
-                'data' => $resource,
-            ];
+        } elseif ($data instanceof JsonResource) {
+            $result[$dataKey] = $data->toArray(request());
         }
 
-        if ($data instanceof JsonResource) {
-            return $data;
+        if (is_array($data)) {
+            return array_merge($result, $data);
         }
 
-        return is_array($data) ? $data : [
-            'data' => $data,
-        ];
+        return $result;
     }
 
     /**
@@ -371,12 +371,15 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             return '';
         }
 
+        if (is_int($value) || is_float($value)) {
+            return (string) $value;
+        }
+
         if (is_object($value) && method_exists($value, '__toString')) {
             $value = $value->__toString();
         } elseif (! is_scalar($value)) {
             $value = json_encode($value, JSON_THROW_ON_ERROR);
         }
-
         /** @var string $value */
         return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
@@ -394,10 +397,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
     private function addApiVersion(array $data, ?string $apiVersion): array
     {
         if ($apiVersion !== null && Config::boolean('api-response.response_structure.include_api_version', false)) {
-            if (! isset($data['content']) || ! is_array($data['content'])) {
-                $data['content'] = [];
-            }
-            $data['content']['api_version'] = $apiVersion;
+            $data['api_version'] = $apiVersion;
         }
         return $data;
     }
