@@ -23,12 +23,14 @@ jobs:
             larastan: ^3.0
             pest: ^3.7
             rector: ^2.0
+            phpstan: ^2.0
           - laravel: 10.*
             testbench: 8.*
             carbon: ^2.63
             larastan: ^2.9
             pest: ^2.35.1
-            rector: ^1.2.10
+            rector: ^1.2
+            phpstan: ^1.4
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
@@ -51,7 +53,7 @@ jobs:
       - name: Install dependencies
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" --no-interaction --no-update
-          composer require --dev "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.carbon }}" "larastan/larastan:${{ matrix.larastan }}" "pestphp/pest:${{ matrix.pest }}" "rector/rector:${{ matrix.rector }}" --no-interaction --no-update
+          composer require --dev "orchestra/testbench:${{ matrix.testbench }}" "nesbot/carbon:${{ matrix.carbon }}" "phpstan/phpstan-phpunit:${{ matrix.phpstan }}" "larastan/larastan:${{ matrix.larastan }}" "pestphp/pest:${{ matrix.pest }}" "rector/rector:${{ matrix.rector }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction
 
       - name: List Installed Dependencies
