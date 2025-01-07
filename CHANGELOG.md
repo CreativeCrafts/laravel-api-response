@@ -35,7 +35,7 @@ All notable changes to `laravel-api-response` will be documented in this file.
 - Added support for Laravel 11
 - Set php8.2 as the minimum php version
 
-## 2.0.0  - 2024-12-30
+## 2.0.0  - 2025-01-07
 
 refactor: comprehensive overhaul of Laravel API Response package
 
@@ -57,5 +57,12 @@ refactor(api): enhance response handling and add comprehensive tests
 - Add extensive test coverage for all major components
 - Implement proper data transformation and XML conversion
 - Update PHPStan configuration for type checking
+
+refactor(api): simplify content negotiation and enhance error handling
+
+- Simplify content type negotiation by removing complex q-value parsing
+- Improve exception handling in ResponseFormatter
+- Update vendor publish command to use specific config tag
+- Update tests to align with new content negotiation behavior
 
 BREAKING CHANGE: Removes createdResponse method. Use successResponse instead.

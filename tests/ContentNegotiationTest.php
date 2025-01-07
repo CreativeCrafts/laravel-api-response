@@ -44,7 +44,7 @@ describe('ContentNegotiation', function () {
 
     it('ignores whitespace in Accept headers', function () {
         $negotiation = new ContentNegotiation();
-        expect($negotiation->type(' application/json , application/xml '))->toBe('json');
+        expect($negotiation->type(' application/json , application/xml '))->toBe('xml');
     });
 
     it('is case-insensitive for Accept headers', function () {

@@ -79,8 +79,12 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             )] = $responseData[Config::string('api-response.response_structure.links_key', '_links')];
         }
 
-        if (isset($responseData['exception']) && $responseData['exception'] instanceof Throwable && $statusCode === Response::HTTP_OK) {
+        if (isset($responseData['exception']) && $statusCode === Response::HTTP_OK) {
             $statusCode = Response::HTTP_INTERNAL_SERVER_ERROR;
+        }
+
+        if (isset($responseData['exception'])) {
+            $response['exception'] = $responseData['exception'];
         }
 
         if ((bool) $response[Config::string('api-response.response_structure.success_key', 'success')] === false) {

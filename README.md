@@ -41,7 +41,7 @@ composer require creativecrafts/laravel-api-response
 The package comes with a default configuration file that you can publish to your application using the following command:
 
 ```bash 
-php artisan vendor:publish --provider="CreativeCrafts\LaravelApiResponse\LaravelApiResponseServiceProvider"
+php artisan vendor:publish --tag=api-response-config
 ```
 This will create a laravel-api-response.php file in your config directory. You can customize various aspects of the package behavior in this file.
 
