@@ -30,7 +30,7 @@ it('generates links correctly', function () {
 });
 
 it('handles string route definitions', function () {
-    Route::get('/test', fn () => 'test')->name('test.route');
+    Route::get('/test', static fn() => 'test')->name('test.route');
 
     $links = ['self' => 'test.route'];
 
