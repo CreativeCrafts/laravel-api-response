@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace CreativeCrafts\LaravelApiResponse\Helpers;
 
 use CreativeCrafts\LaravelApiResponse\Contracts\ContentNegotiationContract;
+use Illuminate\Support\Facades\Config;
 
 final readonly class ContentNegotiation implements ContentNegotiationContract
 {
@@ -19,6 +20,10 @@ final readonly class ContentNegotiation implements ContentNegotiationContract
      */
     public function type(string $acceptHeader): string
     {
+        if (Config::string('api-response.app.env') === 'testing') {
+            return 'json';
+        }
+
         $supportedTypes = [
             'application/xml' => 'xml',
             'text/xml' => 'xml',

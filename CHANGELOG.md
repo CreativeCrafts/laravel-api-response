@@ -76,3 +76,11 @@ fix(response): handle numeric array keys in XML conversion
 
 This fix ensures proper XML generation when arrays contain numeric keys,
 which are not valid XML element names.
+
+## 2.0.2  - 2025-01-07
+
+chore: update dependencies and improve test environment handling
+
+- Add Larastan and Pest PHP version matrix in GitHub Actions workflow
+- Force JSON response type during testing environment
+- Update CHANGELOG.md for version 2.0.2"
