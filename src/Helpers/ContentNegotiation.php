@@ -20,7 +20,7 @@ final readonly class ContentNegotiation implements ContentNegotiationContract
      */
     public function type(string $acceptHeader): string
     {
-        if (Config::string('api-response.app.env') === 'testing') {
+        if (Config::string('api-response.app.env', 'testing') === 'testing') {
             return 'json';
         }
 
