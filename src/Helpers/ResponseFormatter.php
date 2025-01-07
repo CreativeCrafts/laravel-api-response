@@ -343,11 +343,12 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         }
 
         foreach ($array as $key => $value) {
+            $keyName = is_numeric($key) ? 'item_' . $key : $key;
             if (is_array($value)) {
-                $this->arrayToXml($value, $key, $xml->addChild($key));
+                $this->arrayToXml($value, $keyName, $xml->addChild($keyName));
             } else {
                 $xmlValue = $this->convertToXmlSafeValue($value);
-                $xml->addChild($key, $xmlValue);
+                $xml->addChild($keyName, $xmlValue);
             }
         }
 

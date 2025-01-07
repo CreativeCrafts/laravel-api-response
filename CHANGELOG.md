@@ -66,3 +66,13 @@ refactor(api): simplify content negotiation and enhance error handling
 - Update tests to align with new content negotiation behavior
 
 BREAKING CHANGE: Removes createdResponse method. Use successResponse instead.
+
+## 2.0.1  - 2025-01-07
+
+fix(response): handle numeric array keys in XML conversion
+
+- Add 'item_' prefix to numeric keys when converting arrays to XML
+- Update CHANGELOG.md for version 2.0.1
+
+This fix ensures proper XML generation when arrays contain numeric keys,
+which are not valid XML element names.
