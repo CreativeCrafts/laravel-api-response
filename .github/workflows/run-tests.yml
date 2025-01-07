@@ -14,7 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         php: [8.2]
-        laravel: [11.*, 10.*]
+        laravel: [11.*]
         stability: [prefer-stable]
         include:
           - laravel: 11.*
@@ -24,13 +24,6 @@ jobs:
             pest: ^3.7
             rector: ^2.0
             phpstan: ^2.0
-          - laravel: 10.*
-            testbench: 8.*
-            carbon: ^2.63
-            larastan: ^2.9
-            pest: ^2.35.1
-            rector: ^1.2
-            phpstan: ^1.4
 
     name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
 
