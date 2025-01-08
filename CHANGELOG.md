@@ -84,3 +84,11 @@ chore: update dependencies and improve test environment handling
 - Add Larastan and Pest PHP version matrix in GitHub Actions workflow
 - Force JSON response type during testing environment
 - Update CHANGELOG.md for version 2.0.2"
+
+## 2.0.3  - 2025-01-08
+
+chore(deps): update dependencies and fix environment config
+
+- Update orchestra/testbench compatibility to include ^8.0
+- Fix larastan version constraint format
+- Use correct app environment config key in ContentNegotiation
