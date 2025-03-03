@@ -92,3 +92,7 @@ chore(deps): update dependencies and fix environment config
 - Update orchestra/testbench compatibility to include ^8.0
 - Fix larastan version constraint format
 - Use correct app environment config key in ContentNegotiation
+
+## 2.0.4  - 2025-03-03
+
+- Added support for Laravel 12s
