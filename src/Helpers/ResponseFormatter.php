@@ -194,7 +194,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         );
 
         /** @var string $acceptHeader */
-        $acceptHeader = request()->header('Accept');
+        $acceptHeader = request()->header(key: 'Accept', default: 'application/json');
         $responseFormat = (new ContentNegotiation())->type($acceptHeader);
 
         $response = $this->createResponse($formattedResponse, $responseFormat);

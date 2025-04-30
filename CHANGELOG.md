@@ -96,3 +96,10 @@ chore(deps): update dependencies and fix environment config
 ## 2.0.4  - 2025-03-03
 
 - Added support for Laravel 12s
+
+## 2.0.5  - 2025-04-30
+bug fix: resolve issue with content negotiation accept header in the ResponseFormatter
+    - Fixed the issue where the accept header was not being parsed correctly if null
+    - Set the default content type to application/json
+    - Updated the CHANGELOG.md to reflect the changes made in this commit
+    - Update composer dependencies
