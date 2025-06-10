@@ -26,10 +26,10 @@ final readonly class HateoasLinkGenerator implements HateoasLinkGeneratorContrac
         $generatedLinks = [];
         foreach ($links as $rel => $routeInfo) {
             if (is_string($routeInfo)) {
-                $generatedLinks[$rel] = $this->generate($routeInfo, [], $rel);
+                $generatedLinks[$rel] = $this->generate(route: $routeInfo, params: [], rel: $rel);
             } elseif (is_array($routeInfo) && isset($routeInfo['route']) && is_string($routeInfo['route'])) {
                 $params = isset($routeInfo['params']) && is_array($routeInfo['params']) ? $routeInfo['params'] : [];
-                $generatedLinks[$rel] = $this->generate($routeInfo['route'], $params, $rel);
+                $generatedLinks[$rel] = $this->generate(route: $routeInfo['route'], params: $params, rel: $rel);
             }
         }
         return $generatedLinks;
@@ -75,7 +75,7 @@ final readonly class HateoasLinkGenerator implements HateoasLinkGeneratorContrac
             }
 
             $methods = $routeInfo->methods();
-            return empty($methods) ? 'GET' : fluent($methods)->string('0')->toString();
+            return empty($methods) ? 'GET' : fluent($methods)->string(key: '0')->value();
         } catch (Exception $e) {
             return 'GET';
         }

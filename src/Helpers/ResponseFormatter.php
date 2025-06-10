@@ -32,25 +32,21 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      */
     public function format(mixed $data, int $statusCode, array $headers, ?string $resourceClass = null): array
     {
-        $responseData = $this->transformData($data, $resourceClass);
+        $responseData = $this->transformData(data: $data, resourceClass: $resourceClass);
+
+        $successKey = Config::string(key: 'api-response.response_structure.success_key', default: 'success');
+        $messageKey = Config::string(key: 'api-response.response_structure.message_key', default: 'message');
+        $dataKey = Config::string(key: 'api-response.response_structure.data_key', default: 'data');
 
         $response = [
-            Config::string('api-response.response_structure.success_key', 'success') => $responseData[Config::string(
-                'api-response.response_structure.success_key',
-                'success'
-            )] ?? true,
-            Config::string('api-response.response_structure.message_key', 'message') => $responseData[Config::string(
-                'api-response.response_structure.message_key',
-                'message'
-            )] ?? null,
-            Config::string('api-response.response_structure.data_key', 'data') => $responseData[Config::string(
-                'api-response.response_structure.data_key',
-                'data'
-            )] ?? null,
+            $successKey => $responseData[$successKey] ?? true,
+            $messageKey => $responseData[$messageKey] ?? null,
+            $dataKey => $responseData[$dataKey] ?? null,
         ];
 
         if ($data instanceof LengthAwarePaginator) {
-            $response[Config::string('api-response.response_structure.meta_key', 'meta')] = [
+            $metaKey = Config::string(key: 'api-response.response_structure.meta_key', default: 'meta');
+            $response[$metaKey] = [
                 'current_page' => $data->currentPage(),
                 'from' => $data->firstItem(),
                 'last_page' => $data->lastPage(),
@@ -61,22 +57,18 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             ];
         }
 
-        if (isset($responseData[Config::string('api-response.response_structure.errors_key', 'errors_key')])) {
-            $response[Config::string(
-                'api-response.response_structure.errors_key',
-                'errors_key'
-            )] = $responseData[Config::string('api-response.response_structure.errors_key', 'errors_key')];
+        $errorsKey = Config::string(key: 'api-response.response_structure.errors_key', default: 'errors_key');
+        if (isset($responseData[$errorsKey])) {
+            $response[$errorsKey] = $responseData[$errorsKey];
         }
 
         if (isset($responseData['status'])) {
             $response['status'] = $responseData['status'];
         }
 
-        if (isset($responseData[Config::string('api-response.response_structure.links_key', '_links')])) {
-            $response[Config::string(
-                'api-response.response_structure.links_key',
-                '_links'
-            )] = $responseData[Config::string('api-response.response_structure.links_key', '_links')];
+        $linksKey = Config::string(key: 'api-response.response_structure.links_key', default: '_links');
+        if (isset($responseData[$linksKey])) {
+            $response[$linksKey] = $responseData[$linksKey];
         }
 
         if (isset($responseData['exception']) && $statusCode === Response::HTTP_OK) {
@@ -87,11 +79,9 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
             $response['exception'] = $responseData['exception'];
         }
 
-        if ((bool) $response[Config::string('api-response.response_structure.success_key', 'success')] === false) {
-            $response[Config::string(
-                'api-response.response_structure.error_code_key',
-                'error_code'
-            )] = $responseData[Config::string('api-response.response_structure.error_code_key', 'error_code')] ?? 1;
+        if ((bool) $response[$successKey] === false) {
+            $errorCodeKey = Config::string(key: 'api-response.response_structure.error_code_key', default: 'error_code');
+            $response[$errorCodeKey] = $responseData[$errorCodeKey] ?? 1;
         }
 
         if (is_array($data) && isset($data['api_version'])) {
@@ -143,12 +133,9 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      */
     public function createResponse(array $formattedResponse, string $format): LaravelApiResponse
     {
-        /** @var array $content */
-        $content = $formattedResponse['content'];
-        /** @var int $statusCode */
-        $statusCode = $formattedResponse['statusCode'];
-        /** @var array $headers */
-        $headers = $formattedResponse['headers'];
+        $content = fluent($formattedResponse)->array(key: 'content');
+        $statusCode = fluent($formattedResponse)->integer(key: 'statusCode');
+        $headers = fluent($formattedResponse)->array(key: 'headers');
 
         switch ($format) {
             case 'xml':
@@ -182,28 +169,27 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         ?string $apiVersion = null
     ): LaravelApiResponse {
         $responseData = $data ?? [];
-        $responseData = $this->addApiVersion($responseData, $apiVersion);
-
-        $formattedResponse = $this->format($responseData, $statusCode, $headers);
+        $responseData = $this->addApiVersion(data: $responseData, apiVersion: $apiVersion);
+        $formattedResponse = $this->format(data: $responseData, statusCode: $statusCode, headers: $headers);
 
         (new Logging())->logResponse(
-            request()->method(),
-            request()->url(),
-            $statusCode,
-            fluent($formattedResponse)->scope('content')->toArray(),
+            method: request()->method(),
+            url: request()->url(),
+            statusCode: $statusCode,
+            responseData: fluent($formattedResponse)->array(key: 'content') ?: [],
         );
 
         /** @var string $acceptHeader */
         $acceptHeader = request()->header(key: 'Accept', default: 'application/json');
         $responseFormat = (new ContentNegotiation())->type($acceptHeader);
 
-        $response = $this->createResponse($formattedResponse, $responseFormat);
+        $response = $this->createResponse(formattedResponse: $formattedResponse, format: $responseFormat);
 
-        if (Config::boolean('laravel-api-response.enable_compression', true)) {
+        if (Config::boolean(key: 'api-response.enable_compression', default: true)) {
             $content = $response->getContent();
             if ($content !== false) {
                 $contentLength = strlen($content);
-                $compressionThreshold = Config::get('laravel-api-response.compression_threshold', 1024);
+                $compressionThreshold = Config::integer(key: 'api-response.compression_threshold', default: 1024);
 
                 if ($contentLength > $compressionThreshold) {
                     $compressedContent = gzencode($content, 9);
@@ -211,7 +197,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
                         $compressedLength = strlen($compressedContent);
                         if ($compressedLength < $contentLength) {
                             $response->setContent($compressedContent);
-                            $response->headers->set('Content-Encoding', 'gzip');
+                            $response->headers->set(key: 'Content-Encoding', values: 'gzip');
                         }
                     }
                 }
@@ -250,18 +236,19 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      */
     public function generateETag(array $data): string
     {
-        return hash('sha256', json_encode($data, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($data, JSON_THROW_ON_ERROR | JSON_PARTIAL_OUTPUT_ON_ERROR));
     }
 
     /**
      * Check if the resource has not been modified.
      *
      * @throws DateMalformedStringException
+     * @throws Exception
      */
     public function getNotModified(string $etag, DateTime $lastModified): bool
     {
-        $ifNoneMatch = request()->header('If-None-Match');
-        $ifModifiedSince = request()->header('If-Modified-Since');
+        $ifNoneMatch = request()->header(key: 'If-None-Match');
+        $ifModifiedSince = request()->header(key: 'If-Modified-Since');
 
         if ($ifNoneMatch && $ifNoneMatch === $etag) {
             return true;
@@ -283,6 +270,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      * Modify this method if your data structure is different.
      *
      * @throws DateMalformedStringException
+     * @throws Exception
      */
     public function getLastModifiedDate(array $data): DateTime
     {
@@ -302,7 +290,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
     {
         $result = [];
 
-        $dataKey = Config::string('api-response.response_structure.data_key', 'data');
+        $dataKey = Config::string(key: 'api-response.response_structure.data_key', default: 'data');
 
         if ($resourceClass && class_exists($resourceClass)) {
             if ($data instanceof LengthAwarePaginator || $data instanceof Collection) {
@@ -354,7 +342,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
 
         $result = $xml->asXML();
         if ($result === false) {
-            throw new RuntimeException('Failed to convert array to XML');
+            throw new RuntimeException(message: 'Failed to convert array to XML');
         }
         return $result;
     }
@@ -383,7 +371,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
         if (is_object($value) && method_exists($value, '__toString')) {
             $value = $value->__toString();
         } elseif (! is_scalar($value)) {
-            $value = json_encode($value, JSON_THROW_ON_ERROR);
+            $value = json_encode($value, JSON_THROW_ON_ERROR | JSON_PARTIAL_OUTPUT_ON_ERROR);
         }
         /** @var string $value */
         return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
@@ -401,7 +389,7 @@ final readonly class ResponseFormatter implements ResponseFormatterContract
      */
     private function addApiVersion(array $data, ?string $apiVersion): array
     {
-        if ($apiVersion !== null && Config::boolean('api-response.response_structure.include_api_version', false)) {
+        if ($apiVersion !== null && Config::boolean(key: 'api-response.response_structure.include_api_version', default: false)) {
             $data['api_version'] = $apiVersion;
         }
         return $data;
