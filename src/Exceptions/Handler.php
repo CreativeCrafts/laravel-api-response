@@ -92,7 +92,8 @@ class Handler extends ExceptionHandler
         if ($e instanceof ValidationException) {
             return $this->api->validationErrorResponse(
                 errors: $e->errors(),
-                message: in_array($e->getMessage(), ['', '0'], true) ? 'Validation failed' : $e->getMessage()
+                message: in_array($e->getMessage(), ['', '0'], true) ? 'Validation failed' : $e->getMessage(),
+                statusCode: Response::HTTP_UNPROCESSABLE_ENTITY
             );
         }
 

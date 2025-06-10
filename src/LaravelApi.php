@@ -331,9 +331,9 @@ class LaravelApi implements ApiResponseContract
             $cacheKey = $cachePrefix . hash('sha256', serialize($data) . serialize($headers));
 
             $cachedResponse = Cache::remember(
-                key: $cacheKey,
-                ttl: $cacheDuration,
-                callback: function () use ($responseData, $headers): LaravelApiResponse {
+                $cacheKey,
+                $cacheDuration,
+                function () use ($responseData, $headers): LaravelApiResponse {
                     return $this->format->response(data: $responseData, statusCode: Response::HTTP_OK, headers: $headers, apiVersion: $this->apiVersion);
                 }
             );
