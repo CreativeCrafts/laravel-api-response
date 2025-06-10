@@ -1,6 +1,6 @@
 {
     "name": "creativecrafts/laravel-api-response",
-    "description": "A simple package to have a consistent api response.",
+    "description": "Laravel API Response is a powerful and flexible package that provides a standardized way to structure API responses in Laravel applications. It offers a range of features to enhance your API development experience, including consistent response formatting, conditional responses, pagination support, rate limiting, and more.",
     "keywords": [
         "CreativeCrafts",
         "laravel",
