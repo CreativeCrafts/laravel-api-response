@@ -36,7 +36,7 @@ final readonly class ResponseStructureValidator implements ResponseStructureVali
 
         if ($missingKeys !== []) {
             throw new InvalidArgumentException(
-                'Missing required keys in response structure configuration: ' . implode(', ', $missingKeys)
+                message: 'Missing required keys in response structure configuration: ' . implode(', ', $missingKeys)
             );
         }
         return $structure;

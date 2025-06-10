@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,8 +26,10 @@ use Symfony\Component\HttpFoundation\Response as LaravelApiResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
-final class LaravelApi implements ApiResponseContract
+class LaravelApi implements ApiResponseContract
 {
+    use Macroable;
+
     private string $apiVersion;
 
     private array $responseStructure;
@@ -39,9 +42,9 @@ final class LaravelApi implements ApiResponseContract
         private readonly HateoasLinkGeneratorContract $linkGenerator,
         private readonly ResponseStructureValidatorContract $responseStructureValidator
     ) {
-        $this->apiVersion = Config::string('api-response.api_version', '1.0');
+        $this->apiVersion = Config::string(key: 'api-response.api_version', default: '1.0');
         $this->responseStructure = $this->responseStructureValidator->validate(
-            Config::array('api-response.response_structure', [])
+            structure: Config::array(key: 'api-response.response_structure') ?? []
         );
     }
 
@@ -55,7 +58,7 @@ final class LaravelApi implements ApiResponseContract
      */
     public function updateResponseStructure(array $newStructure): void
     {
-        $validatedStructure = $this->responseStructureValidator->validate($newStructure);
+        $validatedStructure = $this->responseStructureValidator->validate(structure: $newStructure);
         $this->responseStructure = array_merge($this->responseStructure, $validatedStructure);
     }
 
@@ -89,22 +92,22 @@ final class LaravelApi implements ApiResponseContract
             ): void {
                 $data = $dataGenerator();
                 if (! is_iterable($data)) {
-                    throw new RuntimeException('Data generator must return an iterable.');
+                    throw new RuntimeException(message: 'Data generator must return an iterable.');
                 }
 
                 echo json_encode([
                     $responseStructure['success_key'] => true,
                     $responseStructure['message_key'] => $localizationHelper->localize($message),
                     'api_version' => $apiVersion,
-                ], JSON_THROW_ON_ERROR) . "\n";
+                ], JSON_THROW_ON_ERROR | JSON_PARTIAL_OUTPUT_ON_ERROR) . "\n";
 
                 foreach ($data as $key => $value) {
                     if (is_string($key) && is_string($value)) {
                         echo json_encode([
                             $key => $value,
-                        ], JSON_THROW_ON_ERROR) . "\n";
+                        ], JSON_THROW_ON_ERROR | JSON_PARTIAL_OUTPUT_ON_ERROR) . "\n";
                     } elseif (is_array($value) || is_object($value)) {
-                        echo json_encode($value, JSON_THROW_ON_ERROR) . "\n";
+                        echo json_encode($value, JSON_THROW_ON_ERROR | JSON_PARTIAL_OUTPUT_ON_ERROR) . "\n";
                     }
                     ob_flush();
                     flush();
@@ -139,15 +142,20 @@ final class LaravelApi implements ApiResponseContract
     ): LaravelApiResponse {
         $responseData = [
             $this->responseStructure['success_key'] => true,
-            $this->responseStructure['message_key'] => $this->localizationHelper->localize($message),
+            $this->responseStructure['message_key'] => $this->localizationHelper->localize(message: $message),
             $this->responseStructure['data_key'] => $data,
         ];
 
         if ($links !== []) {
-            $responseData[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks($links);
+            $responseData[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks(links: $links);
         }
 
-        return $this->format->response($responseData, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -183,14 +191,19 @@ final class LaravelApi implements ApiResponseContract
         }
 
         if ($links !== []) {
-            $data[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks($links);
+            $data[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks(links: $links);
         }
 
         if ($throwable instanceof Throwable && $this->shouldShowExceptionDetails()) {
-            $data['exception'] = $this->format->responseException($throwable);
+            $data['exception'] = $this->format->responseException(throwable: $throwable);
         }
 
-        return $this->format->response($data, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $data,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -218,7 +231,12 @@ final class LaravelApi implements ApiResponseContract
             $this->responseStructure['error_code_key'] => Response::HTTP_UNPROCESSABLE_ENTITY,
         ];
 
-        return $this->format->response($data, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $data,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -242,7 +260,7 @@ final class LaravelApi implements ApiResponseContract
     ): LaravelApiResponse {
         $responseData = [
             $this->responseStructure['success_key'] => true,
-            $this->responseStructure['message_key'] => $this->localizationHelper->localize($message),
+            $this->responseStructure['message_key'] => $this->localizationHelper->localize(message: $message),
             $this->responseStructure['data_key'] => $data['data'],
             $this->responseStructure['meta_key'] => [
                 'current_page' => $data['current_page'],
@@ -256,32 +274,32 @@ final class LaravelApi implements ApiResponseContract
 
         $generatedLinks = array_merge([
             'first' => isset($data['first_page_url']) ? $this->linkGenerator->generate(
-                fluent($data)->string('first_page_url')->toString(),
-                [],
-                'first'
+                route: fluent($data)->string(key: 'first_page_url')->value(),
+                params: [],
+                rel: 'first'
             ) : null,
             'last' => isset($data['last_page_url']) ? $this->linkGenerator->generate(
-                fluent($data)->string('last_page_url')->toString(),
-                [],
-                'last'
+                route: fluent($data)->string(key: 'last_page_url')->value(),
+                params: [],
+                rel: 'last'
             ) : null,
             'prev' => isset($data['prev_page_url']) ? $this->linkGenerator->generate(
-                fluent($data)->string('prev_page_url')->toString(),
-                [],
-                'prev'
+                route: fluent($data)->string(key: 'prev_page_url')->value(),
+                params: [],
+                rel: 'prev'
             ) : null,
             'next' => isset($data['next_page_url']) ? $this->linkGenerator->generate(
-                fluent($data)->string('next_page_url')->toString(),
-                [],
-                'next'
+                route: fluent($data)->string(key: 'next_page_url')->value(),
+                params: [],
+                rel: 'next'
             ) : null,
-        ], $this->linkGenerator->generateLinks($links));
+        ], $this->linkGenerator->generateLinks(links: $links));
 
         $responseData[$this->responseStructure['links_key']] = $generatedLinks;
 
         $rateLimitKey = 'api_rate_limit:' . request()->ip();
-        $maxAttempts = Config::integer('api-response.rate_limit_max_attempts', 60);
-        $decayMinutes = Config::integer('api-response.rate_limit_decay_minutes', 1);
+        $maxAttempts = Config::integer(key: 'api-response.rate_limit_max_attempts', default: 60);
+        $decayMinutes = Config::integer(key: 'api-response.rate_limit_decay_minutes', default: 1);
 
         $headers = array_merge($headers, [
             'X-RateLimit-Limit' => $maxAttempts,
@@ -290,34 +308,33 @@ final class LaravelApi implements ApiResponseContract
         ]);
 
         $rateLimited = ! RateLimiter::attempt(
-            $rateLimitKey,
-            $maxAttempts,
-            static function (): true {
+            key: $rateLimitKey,
+            maxAttempts: $maxAttempts,
+            callback: static function (): true {
                 return true;
             },
-            $decayMinutes * 60
+            decaySeconds: $decayMinutes * 60
         );
 
         if ($rateLimited) {
             return $this->errorResponse(
-                'Too Many Requests',
-                Response::HTTP_TOO_MANY_REQUESTS,
-                null,
-                Response::HTTP_TOO_MANY_REQUESTS,
-                $headers
+                message: 'Too Many Requests',
+                statusCode: Response::HTTP_TOO_MANY_REQUESTS,
+                errorCode: Response::HTTP_TOO_MANY_REQUESTS,
+                headers: $headers
             );
         }
 
-        if (Config::boolean('api-response.cache_paginated_responses', false)) {
-            $cachePrefix = Config::string('api-response.paginated_cache_prefix', 'laravel_api_paginated_');
-            $cacheDuration = Config::integer('api-response.paginated_cache_duration', 3600);
+        if (Config::boolean(key: 'api-response.cache_paginated_responses', default: false)) {
+            $cachePrefix = Config::string(key: 'api-response.paginated_cache_prefix', default: 'laravel_api_paginated_');
+            $cacheDuration = Config::integer(key: 'api-response.paginated_cache_duration', default: 3600);
             $cacheKey = $cachePrefix . hash('sha256', serialize($data) . serialize($headers));
 
             $cachedResponse = Cache::remember(
                 $cacheKey,
                 $cacheDuration,
                 function () use ($responseData, $headers): LaravelApiResponse {
-                    return $this->format->response($responseData, Response::HTTP_OK, $headers, $this->apiVersion);
+                    return $this->format->response(data: $responseData, statusCode: Response::HTTP_OK, headers: $headers, apiVersion: $this->apiVersion);
                 }
             );
             if ($cachedResponse instanceof LaravelApiResponse) {
@@ -325,7 +342,12 @@ final class LaravelApi implements ApiResponseContract
             }
         }
 
-        return $this->format->response($responseData, Response::HTTP_OK, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: Response::HTTP_OK,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -333,9 +355,9 @@ final class LaravelApi implements ApiResponseContract
      */
     public function applyCompression(Router $router): void
     {
-        if (Config::boolean('api-response.enable_compression', true)) {
-            $router->pushMiddlewareToGroup('api', SetCacheHeaders::class);
-            $router->pushMiddlewareToGroup('api', SubstituteBindings::class);
+        if (Config::boolean(key: 'api-response.enable_compression', default: true)) {
+            $router->pushMiddlewareToGroup(group: 'api', middleware: SetCacheHeaders::class);
+            $router->pushMiddlewareToGroup(group: 'api', middleware: SubstituteBindings::class);
         }
     }
 
@@ -378,7 +400,12 @@ final class LaravelApi implements ApiResponseContract
             $this->responseStructure['data_key'] => $metadata,
         ];
 
-        return $this->format->response($responseData, Response::HTTP_OK, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: Response::HTTP_OK,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -457,7 +484,12 @@ final class LaravelApi implements ApiResponseContract
             'operations' => $formattedOperations,
         ];
 
-        return $this->format->response($responseData, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -487,7 +519,12 @@ final class LaravelApi implements ApiResponseContract
             $this->responseStructure['data_key'] => $filteredData,
         ];
 
-        return $this->format->response($responseData, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -511,19 +548,19 @@ final class LaravelApi implements ApiResponseContract
     ): LaravelApiResponse {
         $responseData = [
             $this->responseStructure['success_key'] => true,
-            $this->responseStructure['message_key'] => $this->localizationHelper->localize($message),
+            $this->responseStructure['message_key'] => $this->localizationHelper->localize(message: $message),
             $this->responseStructure['data_key'] => $data,
         ];
 
         if ($links !== []) {
-            $responseData[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks($links);
+            $responseData[$this->responseStructure['links_key']] = $this->linkGenerator->generateLinks(links: $links);
         }
 
-        $etag = $this->format->generateETag($responseData);
-        $lastModified = $this->format->getLastModifiedDate($data);
+        $etag = $this->format->generateETag(data: $responseData);
+        $lastModified = $this->format->getLastModifiedDate(data: $data);
 
-        if ($this->format->getNotModified($etag, $lastModified)) {
-            return $this->format->response(null, Response::HTTP_NOT_MODIFIED, $headers, $this->apiVersion);
+        if ($this->format->getNotModified(etag: $etag, lastModified: $lastModified)) {
+            return $this->format->response(data: null, statusCode: Response::HTTP_NOT_MODIFIED, headers: $headers, apiVersion: $this->apiVersion);
         }
 
         $headers = array_merge($headers, [
@@ -532,7 +569,12 @@ final class LaravelApi implements ApiResponseContract
             'Cache-Control' => 'private, must-revalidate',
         ]);
 
-        return $this->format->response($responseData, $statusCode, $headers, $this->apiVersion);
+        return $this->format->response(
+            data: $responseData,
+            statusCode: $statusCode,
+            headers: $headers,
+            apiVersion: $this->apiVersion
+        );
     }
 
     /**
@@ -547,9 +589,9 @@ final class LaravelApi implements ApiResponseContract
     protected function shouldShowExceptionDetails(): bool
     {
         $allowedEnvironments = Config::array(
-            'api-response.show_exception_environments',
-            ['local', 'development']
+            key: 'api-response.show_exception_environments',
+            default: ['local', 'development']
         );
-        return in_array(Config::string('app.env'), $allowedEnvironments, true);
+        return in_array(Config::string(key: 'app.env'), $allowedEnvironments, true);
     }
 }

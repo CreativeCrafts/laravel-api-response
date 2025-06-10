@@ -103,3 +103,21 @@ bug fix: resolve issue with content negotiation accept header in the ResponseFor
     - Set the default content type to application/json
     - Updated the CHANGELOG.md to reflect the changes made in this commit
     - Update composer dependencies
+
+## 2.0.6 - 2025-06-10
+
+### Added
+- Added Macroable trait to LaravelApi class for custom method extensions
+- Added a custom exception handler with automatic API response formatting
+- Added configuration option to enable/disable a custom exception handler
+- Added code coverage reporting with Codecov integration
+- Added documentation for using the facade, exception handling, and extending with custom methods
+
+### Changed
+- Updated function calls throughout the codebase to use named parameters
+- Enhanced service provider with improved configuration publishing
+- Added installation command with GitHub star prompt
+- Improved documentation with more usage examples
+
+### Fixed
+- Minor text improvements in a configuration file

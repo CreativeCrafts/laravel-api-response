@@ -3,6 +3,7 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/creativecrafts/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecraft/laravel-api-response)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3Arun-tests+branch%3Amain)
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/creativecrafts/laravel-api-response/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/creativecraft/laravel-api-response/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
+[![Code Coverage](https://codecov.io/gh/creativecrafts/laravel-api-response/branch/main/graph/badge.svg)](https://codecov.io/gh/creativecrafts/laravel-api-response)
 [![Total Downloads](https://img.shields.io/packagist/dt/creativecrafts/laravel-api-response.svg?style=flat-square)](https://packagist.org/packages/creativecrafts/laravel-api-response)
 
 Laravel API Response is a powerful and flexible package that provides a standardized way to structure API responses in Laravel applications. It offers a range of features to enhance your API development experience, including consistent response formatting, conditional responses, pagination support, rate limiting, and more.
@@ -46,7 +47,10 @@ php artisan vendor:publish --tag=api-response-config
 This will create a laravel-api-response.php file in your config directory. You can customize various aspects of the package behavior in this file.
 
 ## 3. Basic Usage
-To use the Laravel API Response in your controllers, you can inject the LaravelApi class:
+There are two ways to use the Laravel API Response in your controllers:
+
+### Using Dependency Injection
+You can inject the LaravelApi class:
 
 ```php
 use CreativeCrafts\LaravelApiResponse\LaravelApi;
@@ -64,6 +68,22 @@ class UserController extends Controller
     {
         $users = User::all();
         return $this->api->successResponse('Users retrieved successfully', $users);
+    }
+}
+```
+
+### Using the Facade
+For a more Laravel-like experience, you can use the LaravelApiResponse facade:
+
+```php
+use CreativeCrafts\LaravelApiResponse\Facades\LaravelApiResponse;
+
+class UserController extends Controller
+{
+    public function index()
+    {
+        $users = User::all();
+        return LaravelApiResponse::successResponse('Users retrieved successfully', $users);
     }
 }
 ```
@@ -87,7 +107,7 @@ return $this->api->errorResponse('An error occurred', $errorCode, $statusCode);
 
 ### Conditional Responses
 For responses that support caching and conditional requests:
-    
+
 ```php
 return $this->api->conditionalResponse($data, 'Data retrieved successfully');
 ```
@@ -103,7 +123,7 @@ return $this->api->paginatedResponse('Users retrieved successfully', $users);
 
 ### Rate Limiting
 Rate limiting is automatically applied to API routes. You can configure the rate limit in the laravel-api-response.php config file:
-    
+
 ```php
 'rate_limit_max_attempts' => env('API_RATE_LIMIT_MAX_ATTEMPTS', 60),
 'rate_limit_decay_minutes' => env('API_RATE_LIMIT_DECAY_MINUTES', 1),
@@ -111,7 +131,7 @@ Rate limiting is automatically applied to API routes. You can configure the rate
 
 ### Response Compression
 Response compression can be enabled or disabled in the config:
-    
+
 ```php 
 'enable_compression' => env('API_RESPONSE_COMPRESSION', true),
 ```
@@ -137,10 +157,26 @@ return $this->api->successResponse('User retrieved', $userData, 200, [], $links)
 
 ### Logging
 API responses are logged to a dedicated channel. You can configure the channel in the config file:
-    
+
 ```php  
 'log_channel' => 'api',
 ```
+
+### Exception Handling
+The package includes a custom exception handler that automatically formats exceptions into consistent API responses. This is enabled by default and can be configured in the config file:
+
+```php
+'use_exception_handler' => env('API_USE_EXCEPTION_HANDLER', true),
+```
+
+When enabled, the exception handler will automatically catch exceptions and format them into API responses with appropriate status codes. For example:
+
+- Validation exceptions will be formatted as validation error responses
+- Model not found exceptions will be formatted as 404 error responses
+- Authentication exceptions will be formatted as 401 error responses
+- Authorization exceptions will be formatted as 403 error responses
+
+This ensures consistent error responses across your API without requiring extra code in your controllers.
 
 ## 5. Advanced Usage
 The Laravel API Response package provides a range of advanced features to help you build robust and reliable APIs. Here are some of the key features:
@@ -175,6 +211,25 @@ You can specify custom HTTP status codes for your responses:
 ```php
 return $this->api->successResponse('Resource created', $newResource, 201);
 ```
+
+### Extending with Custom Methods
+The LaravelApi class uses Laravel's Macroable trait, allowing you to add custom response methods at runtime:
+
+```php
+use CreativeCrafts\LaravelApiResponse\LaravelApi;
+use Illuminate\Support\Facades\Response;
+
+LaravelApi::macro('teapotResponse', function ($message = "I'm a teapot") {
+    return Response::json(['message' => $message], 418);
+});
+
+// Then in your controller:
+return $this->api->teapotResponse();
+// Or using the facade:
+return LaravelApiResponse::teapotResponse("Custom teapot message");
+```
+
+This makes it easy to extend the package with your own custom response types without modifying the core code.
 
 ### Version 2: Breaking Changes
 Version 2 of the package introduces one breaking change.
